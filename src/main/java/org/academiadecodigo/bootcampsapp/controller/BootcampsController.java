@@ -47,7 +47,7 @@ public class BootcampsController implements Controller {
         populateTable(bootcampService.getBootcamps());
 
         iD.setCellValueFactory(new PropertyValueFactory<>("id"));
-        city.setCellValueFactory(new PropertyValueFactory<>("location"));
+        city.setCellValueFactory(new PropertyValueFactory<>("city"));
         start.setCellValueFactory(new PropertyValueFactory<>("start"));
         end.setCellValueFactory(new PropertyValueFactory<>("end"));
 
@@ -62,7 +62,7 @@ public class BootcampsController implements Controller {
 
         int bootcampSelected = bootcampsTable.getSelectionModel().getSelectedItem().getId();
 
-        ((BootcampDetailsController) Navigation.getInstance().getController("bootcampsdetails")).loadBootcampDeatils(bootcampSelected);
+        ((BootcampDetailsController) Navigation.getInstance().getController("bootcampsdetails")).loadBootcampDetails(bootcampSelected);
 
     }
 

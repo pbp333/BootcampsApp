@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Created by codecadet on 10/11/17.
  */
-public interface BootcampService extends Service{
+public interface BootcampService extends Service {
 
     void createBootcamp(String location, Date start, Date end);
 
@@ -20,4 +20,5 @@ public interface BootcampService extends Service{
 
     List<CodeCadet> getCodeCadets(int bootcampID);
 
+    void addBootcamp(Bootcamp bootcamp);
 }

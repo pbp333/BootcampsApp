@@ -48,7 +48,7 @@ public final class Navigation {
     public void loadScreen(String view) {
 
         FXMLLoader fxmlLoader;
-        fxmlLoader = new FXMLLoader(getClass().getResource("/" + view + ".fxml"));
+        fxmlLoader = new FXMLLoader(getClass().getResource("/views/" + view + ".fxml"));
         Parent root = null;
 
         try {

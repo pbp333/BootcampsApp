@@ -6,10 +6,10 @@ import org.academiadecodigo.bootcampsapp.model.Bootcamp;
 import org.academiadecodigo.bootcampsapp.model.CodeCadet;
 import org.academiadecodigo.bootcampsapp.model.Gender;
 import org.academiadecodigo.bootcampsapp.persistence.ConnectionManager;
-import org.academiadecodigo.bootcampsapp.service.JdbcUserService;
-import org.academiadecodigo.bootcampsapp.service.MockBootcampService;
-import org.academiadecodigo.bootcampsapp.service.ServiceRegistry;
+import org.academiadecodigo.bootcampsapp.service.*;
 
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 import java.util.Date;
 
 public class Main extends Application {
@@ -18,8 +18,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
 
         Navigation.getInstance().setStage(primaryStage);
-        Navigation.getInstance().loadScreen("loginregisterForm");
-
+        Navigation.getInstance().loadScreen("loginregisterform");
 
     }
 
@@ -27,11 +26,12 @@ public class Main extends Application {
     public void init() throws Exception {
 
 
-        Bootcamp bootcamp1 = new Bootcamp("Lisboa", new Date(119,10,20), new Date(120, 02, 20));
-        Bootcamp bootcamp2 = new Bootcamp("Porto", new Date(131, 03, 12), new Date(131, 07, 01));
+        Bootcamp bootcamp1 = new Bootcamp();
+        Bootcamp bootcamp2 = new Bootcamp();
 
-        bootcamp1.setId(0);
-        bootcamp2.setId(1);
+        bootcamp1.setupBootcamp("Lisboa", new Date(119, 10, 20), new Date(120, 02, 20));
+        bootcamp2.setupBootcamp("Porto", new Date(131, 03, 12), new Date(131, 07, 01));
+
 
         CodeCadet codeCadet1 = new CodeCadet();
         codeCadet1.setName("Blabla");
@@ -80,14 +80,25 @@ public class Main extends Application {
         bootcamp2.addCadet(codeCadet5);
 
 
+        UserService jpaUserService = new JpaUserService();
 
-        MockBootcampService mockBootcampService = new MockBootcampService();
+        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("test");
 
-        mockBootcampService.addBootcamp(bootcamp1);
-        mockBootcampService.addBootcamp(bootcamp2);
+        ((JpaUserService) jpaUserService).setEntityManagerFactory(entityManagerFactory);
 
-        ServiceRegistry.getInstance().addServiceList("User", new JdbcUserService(new ConnectionManager()));
-        ServiceRegistry.getInstance().addServiceList("Bootcamp", mockBootcampService);
+        BootcampService jpaBootcampService = new JpaBootcampService();
+
+        ((JpaBootcampService) jpaBootcampService).setEntityManagerFactory(entityManagerFactory);
+
+        jpaBootcampService.addBootcamp(bootcamp1);
+        jpaBootcampService.addBootcamp(bootcamp2);
+
+        ((JpaBootcampService) jpaBootcampService).removeBootcamp(bootcamp2);
+        ((JpaBootcampService) jpaBootcampService).removeBootcamp(bootcamp1);
+
+
+        ServiceRegistry.getInstance().addServiceList("User", jpaUserService);
+        ServiceRegistry.getInstance().addServiceList("Bootcamp", jpaBootcampService);
 
     }
 

@@ -1,7 +1,6 @@
 package org.academiadecodigo.bootcampsapp.service;
 
 
-
 import org.academiadecodigo.bootcampsapp.model.Bootcamp;
 import org.academiadecodigo.bootcampsapp.model.CodeCadet;
 
@@ -25,7 +24,8 @@ public class MockBootcampService implements BootcampService {
     @Override
     public void createBootcamp(String location, Date start, Date end) {
 
-        Bootcamp bootcamp = new Bootcamp(location, start, end);
+        Bootcamp bootcamp = new Bootcamp();
+        bootcamp.setupBootcamp(location, start, end);
         bootcamp.setId(numBootcamps);
         bootcamps.add(bootcamp);
         numBootcamps++;
@@ -56,6 +56,7 @@ public class MockBootcampService implements BootcampService {
         return bootcamps.get(bootcampID).getCodeCadets();
     }
 
+    @Override
     public void addBootcamp(Bootcamp bootcamp) {
         bootcamps.add(bootcamp);
     }

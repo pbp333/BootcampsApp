@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.academiadecodigo.register.controller.BootcampDetailsController">
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.academiadecodigo.bootcampsapp.controller.BootcampDetailsController">
    <children>
       <Label alignment="TOP_CENTER" layoutX="116.0" layoutY="14.0" prefHeight="43.0" prefWidth="368.0" text="Bootcamp Details">
          <font>
@@ -23,7 +23,7 @@
             <TableColumn fx:id="city" prefWidth="67.0" text="City" />
             <TableColumn fx:id="phone" prefWidth="76.0" text="Phone" />
             <TableColumn fx:id="birthdate" prefWidth="77.0" text="Birthdate" />
-            <TableColumn fx:id="bootcamp" text="Bootcamp" />
+            <TableColumn fx:id="bootcampID" text="Bootcamp" />
         </columns>
       </TableView>
       <Label layoutX="210.0" layoutY="69.0" text="iD" />

@@ -151,7 +151,12 @@ public class LoginController implements Controller {
 
     private void successfulRegister() {
 
-        userService.addUser(new User(username.getText(), password.getText(), email.getText()));
+        User user = new User();
+        user.setUsername(username.getText());
+        user.setPassword(password.getText());
+        user.setEmail(email.getText());
+
+        userService.addUser(user);
         fieldsClear();
         setInformation("You have registered successfully.");
         informationText.setTextFill(Color.GREEN);

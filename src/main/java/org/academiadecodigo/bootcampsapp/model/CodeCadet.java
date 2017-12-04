@@ -1,21 +1,40 @@
 package org.academiadecodigo.bootcampsapp.model;
 
+import javax.persistence.*;
 import java.util.Date;
 
 /**
  * Created by codecadet on 10/11/17.
  */
+@Entity
+@Table(name = "codecadets")
 public class CodeCadet {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @OneToOne
     private User user;
 
     private String name;
+
+
     private Gender gender;
     private String address;
     private String City;
     private String phone;
+    @ManyToOne
     private Bootcamp bootcamp;
     private Date birthday;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
     public User getUser() {
         return user;

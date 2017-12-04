@@ -124,7 +124,10 @@ public class JdbcUserService implements UserService {
                 String username = resultSet.getString("username");
                 String password = resultSet.getString("password");
                 String email = resultSet.getString("email");
-                user = new User(username, password, email);
+                user = new User();
+                user.setUsername(username);
+                user.setPassword(password);
+                user.setEmail(email);
             }
 
             statement.close();

@@ -78,11 +78,11 @@ public class BootcampDetailsController implements Controller {
 
     }
 
-    public void loadBootcampDeatils(int bootcampID) {
+    public void loadBootcampDetails(int bootcampID) {
 
         bootcampService = (BootcampService) ServiceRegistry.getInstance().getService("Bootcamp");
 
-        bootcamp = bootcampService.getBootcamps().get(bootcampID);
+        bootcamp = bootcampService.getBootcamps().get(bootcampID - 1);
 
         cadetsTable.setItems(FXCollections.observableList(new ArrayList<>(bootcamp.getCodeCadets())));
 
@@ -92,9 +92,8 @@ public class BootcampDetailsController implements Controller {
         address.setCellValueFactory(new PropertyValueFactory<>("address"));
 
         iDLabel.setText(Integer.toString(bootcamp.getId()));
-        locationLabel.setText(bootcamp.getLocation());
+        locationLabel.setText(bootcamp.getCity());
         startLabel.setText(bootcamp.getStart().toString());
         endLabel.setText(bootcamp.getEnd().toString());
-
     }
 }

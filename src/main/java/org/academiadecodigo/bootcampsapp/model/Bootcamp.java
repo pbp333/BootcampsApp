@@ -1,5 +1,6 @@
 package org.academiadecodigo.bootcampsapp.model;
 
+import javax.persistence.*;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,25 +8,33 @@ import java.util.List;
 /**
  * Created by codecadet on 10/11/17.
  */
+@Entity
+@Table(name = "bootcamps")
 public class Bootcamp {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @OneToMany(
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            mappedBy = "bootcamp",
+            fetch = FetchType.EAGER
+    )
     private List<CodeCadet> codeCadets;
-    private String location;
+    private String city;
     private Date start;
     private Date end;
 
-    public Bootcamp(String location, Date start, Date end){
-
-        this.location = location;
-        this.start = start;
-        this.end = end;
-        codeCadets = new LinkedList<>();
+    public Bootcamp() {
     }
+
     public void addCadet(CodeCadet codeCadet) {
 
         codeCadets.add(codeCadet);
     }
+
     public int getId() {
         return id;
     }
@@ -42,12 +51,12 @@ public class Bootcamp {
         this.codeCadets = codeCadets;
     }
 
-    public String getLocation() {
-        return location;
+    public String getCity() {
+        return city;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
+    public void setCity(String city) {
+        this.city = city;
     }
 
     public Date getStart() {
@@ -66,4 +75,30 @@ public class Bootcamp {
         this.end = end;
     }
 
+    public void setupBootcamp(String city, Date start, Date end) {
+
+        this.city = city;
+        this.start = start;
+        this.end = end;
+        codeCadets = new LinkedList<>();
+    }
+
+    public boolean equals(Bootcamp bootcamp) {
+
+        return this.city.equals(bootcamp.getCity()) &&
+                this.start.equals(bootcamp.getStart()) &&
+                this.end.equals(bootcamp.getEnd());
+    }
+
+
+    @Override
+    public String toString() {
+        return "Bootcamp{" +
+                "id=" + id +
+                ", codeCadets=" + codeCadets +
+                ", city='" + city + '\'' +
+                ", start=" + start +
+                ", end=" + end +
+                '}';
+    }
 }
