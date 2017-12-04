@@ -2,6 +2,8 @@ package org.academiadecodigo.bootcampsapp.service;
 
 import org.academiadecodigo.bootcampsapp.model.Bootcamp;
 import org.academiadecodigo.bootcampsapp.model.CodeCadet;
+import org.academiadecodigo.bootcampsapp.persistence.SessionManager;
+import org.academiadecodigo.bootcampsapp.persistence.TransactionManager;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -17,7 +19,14 @@ import java.util.List;
  */
 public class JpaBootcampService implements BootcampService {
 
-    private EntityManagerFactory entityManagerFactory;
+    private TransactionManager transactionManager;
+    private SessionManager sessionManager;
+
+    public JpaBootcampService(TransactionManager transactionManager, SessionManager sessionManager) {
+
+        this.transactionManager = transactionManager;
+        this.sessionManager = sessionManager;
+    }
 
     @Override
     public void createBootcamp(String location, Date start, Date end) {
@@ -25,11 +34,10 @@ public class JpaBootcampService implements BootcampService {
         Bootcamp bootcamp = new Bootcamp();
         bootcamp.setupBootcamp(location, start, end);
 
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-        entityManager.getTransaction().begin();
-        entityManager.persist(bootcamp);
-        entityManager.getTransaction().commit();
-        entityManager.close();
+        transactionManager.beginRead();
+        transactionManager.beginWrite();
+        sessionManager.getCurrentSession().persist(bootcamp);
+        transactionManager.commit();
 
     }
 
@@ -44,11 +52,9 @@ public class JpaBootcampService implements BootcampService {
             bootcamps.get(bootcampID).addCadet(codeCadet);
         }
 
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-        entityManager.getTransaction().begin();
-        entityManager.merge(bootcamps.get(bootcampID));
-        entityManager.getTransaction().commit();
-        entityManager.close();
+        transactionManager.beginWrite();
+        sessionManager.getCurrentSession().merge(bootcamps.get(bootcampID));
+        transactionManager.commit();
     }
 
     @Override
@@ -56,19 +62,17 @@ public class JpaBootcampService implements BootcampService {
 
         List<Bootcamp> bootcamps;
 
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-
         try {
-            CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+            CriteriaBuilder criteriaBuilder = sessionManager.getCurrentSession().getCriteriaBuilder();
             CriteriaQuery<Bootcamp> criteriaQuery = criteriaBuilder.createQuery(Bootcamp.class);
             Root<Bootcamp> root = criteriaQuery.from(Bootcamp.class);
             criteriaQuery.select(root);
-            bootcamps = entityManager.createQuery(criteriaQuery).getResultList();
+            bootcamps = sessionManager.getCurrentSession().createQuery(criteriaQuery).getResultList();
 
         } finally {
-            if (entityManager != null) {
-                entityManager.close();
-            }
+
+            sessionManager.stopSession();
+
         }
 
         return bootcamps;
@@ -77,20 +81,9 @@ public class JpaBootcampService implements BootcampService {
     @Override
     public void addBootcamp(Bootcamp bootcamp) {
 
-        List<Bootcamp> bootcamps = getBootcamps();
-
-        for (Bootcamp bc : bootcamps) {
-
-            if (bc.equals(bootcamp)) {
-                return;
-            }
-        }
-
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-        entityManager.getTransaction().begin();
-        entityManager.merge(bootcamp);
-        entityManager.getTransaction().commit();
-        entityManager.close();
+        transactionManager.beginWrite();
+        sessionManager.getCurrentSession().merge(bootcamp);
+        transactionManager.commit();
     }
 
     @Override
@@ -101,16 +94,10 @@ public class JpaBootcampService implements BootcampService {
         return bootcamps.get(bootcampID).getCodeCadets();
     }
 
-    public void setEntityManagerFactory(EntityManagerFactory entityManagerFactory) {
-        this.entityManagerFactory = entityManagerFactory;
-    }
+    public void removeBootcamp(Bootcamp bootcamp) {
 
-    public void removeBootcamp(Bootcamp bootcamp){
-
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-        entityManager.getTransaction().begin();
-        entityManager.remove(bootcamp);
-        entityManager.getTransaction().commit();
-        entityManager.close();
+        transactionManager.beginWrite();
+        sessionManager.getCurrentSession().remove(bootcamp);
+        transactionManager.commit();
     }
 }

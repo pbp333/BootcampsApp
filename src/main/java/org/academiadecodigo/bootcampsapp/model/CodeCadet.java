@@ -16,14 +16,12 @@ public class CodeCadet {
 
     @OneToOne
     private User user;
-
     private String name;
-
-
     private Gender gender;
     private String address;
     private String City;
     private String phone;
+
     @ManyToOne
     private Bootcamp bootcamp;
     private Date birthday;

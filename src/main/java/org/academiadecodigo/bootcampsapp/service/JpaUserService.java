@@ -1,6 +1,8 @@
 package org.academiadecodigo.bootcampsapp.service;
 
 import org.academiadecodigo.bootcampsapp.model.User;
+import org.academiadecodigo.bootcampsapp.persistence.SessionManager;
+import org.academiadecodigo.bootcampsapp.persistence.TransactionManager;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -15,14 +17,20 @@ import java.util.List;
  */
 public class JpaUserService implements UserService {
 
-    private EntityManagerFactory entityManagerFactory;
+    private TransactionManager transactionManager;
+    private SessionManager sessionManager;
+
+    public JpaUserService(TransactionManager transactionManager, SessionManager sessionManager) {
+        this.transactionManager = transactionManager;
+        this.sessionManager = sessionManager;
+    }
 
     @Override
     public boolean authenticate(String username, String password) {
-
+        System.out.println("I WAS INVOCATED authenticate");
         User user = findByName(username);
 
-        if(user == null){
+        if (user == null) {
             return false;
         }
 
@@ -32,31 +40,35 @@ public class JpaUserService implements UserService {
 
     @Override
     public void addUser(User user) {
+        try {
 
-        if (findByName(user.getUsername()) == null) {
 
-            initiateEntityManagerFactory();
+            if (findByName(user.getUsername()) == null) {
 
-            EntityManager entityManager = entityManagerFactory.createEntityManager();
-            entityManager.getTransaction().begin();
-            entityManager.persist(user);
-            entityManager.getTransaction().commit();
-            entityManager.close();
+                transactionManager.beginWrite();
+                sessionManager.getCurrentSession().persist(user);
+                transactionManager.commit();
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            System.out.println("Adding user went wrong");
+
+        } finally {
+            sessionManager.stopSession();
         }
     }
 
     @Override
     public void removeUser(User user) {
 
+        transactionManager.beginRead();
+
         if (findByName(user.getUsername()) != null) {
 
-            initiateEntityManagerFactory();
-
-            EntityManager entityManager = entityManagerFactory.createEntityManager();
-            entityManager.getTransaction().begin();
-            entityManager.remove(user);
-            entityManager.getTransaction().commit();
-            entityManager.close();
+            sessionManager.getCurrentSession().remove(user);
+            transactionManager.commit();
         }
 
     }
@@ -64,76 +76,71 @@ public class JpaUserService implements UserService {
     @Override
     public User findByName(String name) {
 
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-
         try {
-            CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+            CriteriaBuilder criteriaBuilder = sessionManager.getCurrentSession().getCriteriaBuilder();
 
             CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
-
             Root<User> root = criteriaQuery.from(User.class);
-
             criteriaQuery.select(root);
-
             criteriaQuery.where(criteriaBuilder.equal(root.get("username"), name));
 
+            List<User> userList = sessionManager.getCurrentSession().createQuery(criteriaQuery).getResultList();
 
-            List<User> userList = entityManager.createQuery(criteriaQuery).getResultList();
             if (userList.isEmpty()) {
 
                 return null;
             } else {
-                return userList.get(0);
 
+                return userList.get(0);
             }
 
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            return null;
 
         } finally {
-            if (entityManager != null) {
-                entityManager.close();
-            }
+
+            sessionManager.stopSession();
         }
     }
 
+
     @Override
     public int count() {
-        return 0;
+
+        CriteriaBuilder criteriaBuilder = sessionManager.getCurrentSession().getCriteriaBuilder();
+        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+
+        criteriaQuery.select(criteriaBuilder.count(criteriaQuery.from(User.class)));
+
+        long count = sessionManager.getCurrentSession().createQuery(criteriaQuery).getSingleResult();
+
+        return (int) count;
     }
 
     @Override
     public boolean emailAvailability(String email) {
-
-        initiateEntityManagerFactory();
-
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-
         try {
-            CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+            CriteriaBuilder criteriaBuilder = sessionManager.getCurrentSession().getCriteriaBuilder();
             CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
             Root<User> root = criteriaQuery.from(User.class);
             criteriaQuery.select(root);
             criteriaQuery.where(criteriaBuilder.equal(root.get("email"), email));
 
-            List<User> emailList = entityManager.createQuery(criteriaQuery).getResultList();
+            List<User> emailList = sessionManager.getCurrentSession().createQuery(criteriaQuery).getResultList();
 
             return emailList.isEmpty();
 
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            return true;
+
         } finally {
-            if (entityManager != null) {
-                entityManager.close();
-            }
+
+            sessionManager.stopSession();
         }
-    }
-
-    public void initiateEntityManagerFactory() {
-
-        if (entityManagerFactory == null) {
-
-            entityManagerFactory = Persistence.createEntityManagerFactory("test");
-        }
-    }
-
-    public void setEntityManagerFactory(EntityManagerFactory entityManagerFactory) {
-        this.entityManagerFactory = entityManagerFactory;
     }
 }

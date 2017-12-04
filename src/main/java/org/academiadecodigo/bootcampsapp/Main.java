@@ -5,7 +5,7 @@ import javafx.stage.Stage;
 import org.academiadecodigo.bootcampsapp.model.Bootcamp;
 import org.academiadecodigo.bootcampsapp.model.CodeCadet;
 import org.academiadecodigo.bootcampsapp.model.Gender;
-import org.academiadecodigo.bootcampsapp.persistence.ConnectionManager;
+import org.academiadecodigo.bootcampsapp.persistence.*;
 import org.academiadecodigo.bootcampsapp.service.*;
 
 import javax.persistence.EntityManagerFactory;
@@ -79,22 +79,19 @@ public class Main extends Application {
         codeCadet5.setBootcamp(bootcamp2);
         bootcamp2.addCadet(codeCadet5);
 
+        SessionManager sessionManager = new JpaSessionManager(Persistence.createEntityManagerFactory("test"));
 
-        UserService jpaUserService = new JpaUserService();
+        TransactionManager transactionManager = new JpaTransactionManager(sessionManager);
 
-        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("test");
+        UserService jpaUserService = new JpaUserService(transactionManager, sessionManager);
 
-        ((JpaUserService) jpaUserService).setEntityManagerFactory(entityManagerFactory);
-
-        BootcampService jpaBootcampService = new JpaBootcampService();
-
-        ((JpaBootcampService) jpaBootcampService).setEntityManagerFactory(entityManagerFactory);
+        BootcampService jpaBootcampService = new JpaBootcampService(transactionManager, sessionManager);
 
         jpaBootcampService.addBootcamp(bootcamp1);
         jpaBootcampService.addBootcamp(bootcamp2);
 
-        ((JpaBootcampService) jpaBootcampService).removeBootcamp(bootcamp2);
-        ((JpaBootcampService) jpaBootcampService).removeBootcamp(bootcamp1);
+        //((JpaBootcampService) jpaBootcampService).removeBootcamp(bootcamp2);
+        //((JpaBootcampService) jpaBootcampService).removeBootcamp(bootcamp1);
 
 
         ServiceRegistry.getInstance().addServiceList("User", jpaUserService);

@@ -157,7 +157,7 @@ public class LoginController implements Controller {
         user.setEmail(email.getText());
 
         userService.addUser(user);
-        fieldsClear();
+        //fieldsClear();
         setInformation("You have registered successfully.");
         informationText.setTextFill(Color.GREEN);
 
