@@ -6,6 +6,8 @@ import org.academiadecodigo.bootcampsapp.model.Bootcamp;
 import org.academiadecodigo.bootcampsapp.model.CodeCadet;
 import org.academiadecodigo.bootcampsapp.model.Gender;
 import org.academiadecodigo.bootcampsapp.persistence.*;
+import org.academiadecodigo.bootcampsapp.persistence.dao.jpa.JpaBootcampDao;
+import org.academiadecodigo.bootcampsapp.persistence.dao.jpa.JpaUserDao;
 import org.academiadecodigo.bootcampsapp.service.*;
 
 import javax.persistence.EntityManagerFactory;
@@ -83,9 +85,9 @@ public class Main extends Application {
 
         TransactionManager transactionManager = new JpaTransactionManager(sessionManager);
 
-        UserService jpaUserService = new JpaUserService(transactionManager, sessionManager);
+        UserService jpaUserService = new JpaUserService(transactionManager, new JpaUserDao(sessionManager));
 
-        BootcampService jpaBootcampService = new JpaBootcampService(transactionManager, sessionManager);
+        BootcampService jpaBootcampService = new JpaBootcampService(transactionManager, new JpaBootcampDao(sessionManager));
 
         jpaBootcampService.addBootcamp(bootcamp1);
         jpaBootcampService.addBootcamp(bootcamp2);

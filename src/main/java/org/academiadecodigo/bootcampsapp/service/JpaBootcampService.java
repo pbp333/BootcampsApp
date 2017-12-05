@@ -3,7 +3,9 @@ package org.academiadecodigo.bootcampsapp.service;
 import org.academiadecodigo.bootcampsapp.model.Bootcamp;
 import org.academiadecodigo.bootcampsapp.model.CodeCadet;
 import org.academiadecodigo.bootcampsapp.persistence.SessionManager;
+import org.academiadecodigo.bootcampsapp.persistence.TransactionException;
 import org.academiadecodigo.bootcampsapp.persistence.TransactionManager;
+import org.academiadecodigo.bootcampsapp.persistence.dao.jpa.JpaBootcampDao;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -20,12 +22,12 @@ import java.util.List;
 public class JpaBootcampService implements BootcampService {
 
     private TransactionManager transactionManager;
-    private SessionManager sessionManager;
+    private JpaBootcampDao jpaBootcampDao;
 
-    public JpaBootcampService(TransactionManager transactionManager, SessionManager sessionManager) {
+    public JpaBootcampService(TransactionManager transactionManager, JpaBootcampDao jpaBootcampDao) {
 
         this.transactionManager = transactionManager;
-        this.sessionManager = sessionManager;
+        this.jpaBootcampDao = jpaBootcampDao;
     }
 
     @Override
@@ -34,56 +36,51 @@ public class JpaBootcampService implements BootcampService {
         Bootcamp bootcamp = new Bootcamp();
         bootcamp.setupBootcamp(location, start, end);
 
-        transactionManager.beginRead();
-        transactionManager.beginWrite();
-        sessionManager.getCurrentSession().persist(bootcamp);
-        transactionManager.commit();
-
+        addBootcamp(bootcamp);
     }
 
     @Override
     public void addCodeCadet(int bootcampID, CodeCadet codeCadet) {
 
-        List<Bootcamp> bootcamps = getBootcamps();
+        try {
 
-
-        if (bootcamps.get(bootcampID) != null) {
-
-            bootcamps.get(bootcampID).addCadet(codeCadet);
+            transactionManager.beginWrite();
+            jpaBootcampDao.addCodeCadet(bootcampID, codeCadet);
+            transactionManager.commit();
+        } catch (TransactionException e) {
+            transactionManager.rollback();
+            e.printStackTrace();
         }
-
-        transactionManager.beginWrite();
-        sessionManager.getCurrentSession().merge(bootcamps.get(bootcampID));
-        transactionManager.commit();
     }
 
     @Override
     public List<Bootcamp> getBootcamps() {
 
-        List<Bootcamp> bootcamps;
-
         try {
-            CriteriaBuilder criteriaBuilder = sessionManager.getCurrentSession().getCriteriaBuilder();
-            CriteriaQuery<Bootcamp> criteriaQuery = criteriaBuilder.createQuery(Bootcamp.class);
-            Root<Bootcamp> root = criteriaQuery.from(Bootcamp.class);
-            criteriaQuery.select(root);
-            bootcamps = sessionManager.getCurrentSession().createQuery(criteriaQuery).getResultList();
+            transactionManager.beginRead();
+            return jpaBootcampDao.getBootcamps();
+
+        } catch (TransactionException e) {
+            transactionManager.rollback();
+            throw new IllegalStateException();
 
         } finally {
-
-            sessionManager.stopSession();
-
+            transactionManager.commit();
         }
-
-        return bootcamps;
     }
 
     @Override
     public void addBootcamp(Bootcamp bootcamp) {
 
-        transactionManager.beginWrite();
-        sessionManager.getCurrentSession().merge(bootcamp);
-        transactionManager.commit();
+        try {
+
+            transactionManager.beginWrite();
+            jpaBootcampDao.createBootcamp(bootcamp);
+            transactionManager.commit();
+        } catch (TransactionException e) {
+            transactionManager.rollback();
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -96,8 +93,14 @@ public class JpaBootcampService implements BootcampService {
 
     public void removeBootcamp(Bootcamp bootcamp) {
 
-        transactionManager.beginWrite();
-        sessionManager.getCurrentSession().remove(bootcamp);
-        transactionManager.commit();
+        try {
+
+            transactionManager.beginWrite();
+            jpaBootcampDao.removeBootcamp(bootcamp);
+            transactionManager.commit();
+        } catch (TransactionException e) {
+            transactionManager.rollback();
+            e.printStackTrace();
+        }
     }
 }

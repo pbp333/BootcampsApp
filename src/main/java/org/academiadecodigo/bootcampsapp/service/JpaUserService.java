@@ -1,16 +1,9 @@
 package org.academiadecodigo.bootcampsapp.service;
 
 import org.academiadecodigo.bootcampsapp.model.User;
-import org.academiadecodigo.bootcampsapp.persistence.SessionManager;
+import org.academiadecodigo.bootcampsapp.persistence.TransactionException;
 import org.academiadecodigo.bootcampsapp.persistence.TransactionManager;
-
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-import java.util.List;
+import org.academiadecodigo.bootcampsapp.persistence.dao.UserDao;
 
 /**
  * Created by codecadet on 30/11/17.
@@ -18,57 +11,63 @@ import java.util.List;
 public class JpaUserService implements UserService {
 
     private TransactionManager transactionManager;
-    private SessionManager sessionManager;
+    private UserDao userDao;
 
-    public JpaUserService(TransactionManager transactionManager, SessionManager sessionManager) {
+    public JpaUserService(TransactionManager transactionManager, UserDao userDao) {
         this.transactionManager = transactionManager;
-        this.sessionManager = sessionManager;
+        this.userDao = userDao;
     }
 
     @Override
     public boolean authenticate(String username, String password) {
-        System.out.println("I WAS INVOCATED authenticate");
+
         User user = findByName(username);
 
         if (user == null) {
             return false;
+
         }
-
         return user.getPassword().equals(password);
-
     }
+
 
     @Override
     public void addUser(User user) {
+
         try {
 
+            transactionManager.beginWrite();
 
-            if (findByName(user.getUsername()) == null) {
+            if (userDao.findByUsername(user.getUsername()) == null) {
 
-                transactionManager.beginWrite();
-                sessionManager.getCurrentSession().persist(user);
-                transactionManager.commit();
+                userDao.saveOrUpdate(user);
             }
+            transactionManager.commit();
 
-        } catch (Exception e) {
+        } catch (TransactionException e) {
 
+            transactionManager.rollback();
             e.printStackTrace();
             System.out.println("Adding user went wrong");
-
-        } finally {
-            sessionManager.stopSession();
         }
     }
 
     @Override
     public void removeUser(User user) {
 
-        transactionManager.beginRead();
+        try {
 
-        if (findByName(user.getUsername()) != null) {
+            transactionManager.beginWrite();
 
-            sessionManager.getCurrentSession().remove(user);
+            if (userDao.findByUsername(user.getUsername()) != null) {
+
+                userDao.delete(user.getId());
+            }
             transactionManager.commit();
+
+        } catch (TransactionException e) {
+            transactionManager.rollback();
+            e.printStackTrace();
         }
 
     }
@@ -78,69 +77,53 @@ public class JpaUserService implements UserService {
 
         try {
 
-            CriteriaBuilder criteriaBuilder = sessionManager.getCurrentSession().getCriteriaBuilder();
+            transactionManager.beginRead();
+            return userDao.findByUsername(name);
 
-            CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
-            Root<User> root = criteriaQuery.from(User.class);
-            criteriaQuery.select(root);
-            criteriaQuery.where(criteriaBuilder.equal(root.get("username"), name));
-
-            List<User> userList = sessionManager.getCurrentSession().createQuery(criteriaQuery).getResultList();
-
-            if (userList.isEmpty()) {
-
-                return null;
-            } else {
-
-                return userList.get(0);
-            }
-
-        } catch (Exception e) {
+        } catch (TransactionException e) {
 
             e.printStackTrace();
             return null;
 
         } finally {
 
-            sessionManager.stopSession();
+            transactionManager.commit();
         }
     }
-
 
     @Override
     public int count() {
 
-        CriteriaBuilder criteriaBuilder = sessionManager.getCurrentSession().getCriteriaBuilder();
-        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+        try {
 
-        criteriaQuery.select(criteriaBuilder.count(criteriaQuery.from(User.class)));
+            transactionManager.beginRead();
+            return userDao.count();
 
-        long count = sessionManager.getCurrentSession().createQuery(criteriaQuery).getSingleResult();
+        } catch (TransactionException e) {
 
-        return (int) count;
+            e.printStackTrace();
+            return 0;
+
+        } finally {
+            transactionManager.commit();
+        }
     }
 
     @Override
     public boolean emailAvailability(String email) {
+
         try {
-            CriteriaBuilder criteriaBuilder = sessionManager.getCurrentSession().getCriteriaBuilder();
-            CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
-            Root<User> root = criteriaQuery.from(User.class);
-            criteriaQuery.select(root);
-            criteriaQuery.where(criteriaBuilder.equal(root.get("email"), email));
+            transactionManager.beginRead();
+            User user = userDao.findByEmail(email);
+            transactionManager.commit();
 
-            List<User> emailList = sessionManager.getCurrentSession().createQuery(criteriaQuery).getResultList();
+            return user == null;
 
-            return emailList.isEmpty();
+        } catch (TransactionException e) {
 
-        } catch (Exception e) {
-
+            transactionManager.rollback();
             e.printStackTrace();
             return true;
-
-        } finally {
-
-            sessionManager.stopSession();
         }
     }
 }
